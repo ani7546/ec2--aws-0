@@ -12,10 +12,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Verify files
-        run: ls -la
+      - name: Add SSH private key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Copy file to EC2
+      - name: Add known hosts
+        run: ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy index.php to EC2
         env:
           USER: ${{ secrets.AWS_USERNAME }}
           HOST: ${{ secrets.AWS_EC2_HOST }}
