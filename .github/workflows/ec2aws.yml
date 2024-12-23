@@ -1,0 +1,31 @@
+name: Deploy PHP App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@main
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_KEY_PAIR }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+    - name: Deploy PHP File
+      env:
+        HOST: ${{ secrets.AWS_EC2_HOST }}
+        USER: ${{ secrets.AWS_USERNAME }}
+      run: |
+        scp -o StrictHostKeyChecking=no index.php $USER@$HOST:/tmp/index.php
+        ssh -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
+          sudo mv /tmp/index.php /var/www/html/index.php
+          sudo systemctl restart apache2
+        EOF
